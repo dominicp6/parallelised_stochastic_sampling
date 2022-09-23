@@ -18,14 +18,19 @@ from abc import abstractmethod
 
 class Trajectory:
 
-    def __init__(self, data: list[np.array]):
+    def __init__(self, data: list[np.array], burn_in=None):
         self.raw_data = data
-        self.burn_in = min(int(data[0].shape[0]/2), 2000)  # TODO: tidy
+        self.burn_in = min(int(data[0].shape[0]/2), 2000) # TODO: check
         self.num_chains = len(data)
         assert len(set(data[i].shape[1] for i in range(len(data)))) == 1, "not all chains have the same dimension"
-        self.dimension = data[0].shape[1]
+        self.spatial_dim = data[0][0].shape[1]
+        self.parameter_dim = data[0][0].shape[0]
         self.chain_lengths = [chain.shape[0] for chain in data]
+        assert len(set(self.chain_lengths)) == 1, "not all chains have the same length"
         self.num_iterations = data[0].shape[0]
+
+    def __str__(self):
+        return f"Trajectory_Object(num_chains={self.num_chains}, chain_lengths={self.chain_lengths}, spatial_dim={self.spatial_dim}, parameter_dim={self.parameter_dim})"
 
     def set_burn_in(self, burn_in):
         self.burn_in = burn_in
@@ -37,26 +42,36 @@ class Trajectory:
         assert 0 <= chain_id < self.num_chains, f"chain_id must be an integer in the range [{0, self.num_chains})"
         return self.raw_data[chain_id][self.burn_in:]
 
-    def get_dimension(self, dimension_id: int, chains=None):
-        assert 0 <= dimension_id < self.num_chains, f"dimension_id must be an integer in the range [{0, self.dimension})"
+    def get_dimension(self, parameter_dim_id: int, spatial_dim_id: int, chains=None):
+        assert 0 <= spatial_dim_id < self.num_chains, f"spatial_dim_id must be an integer in the range [{0, self.spatial_dim})"
+        assert 0 <= parameter_dim_id < self.num_chains, f"parameter_dim_id must be an integer in the range [{0, self.parameter_dim})"
         if chains is None:
             chains = range(self.num_chains)
-        return [self.raw_data[chain_id][self.burn_in:, dimension_id] for chain_id in chains]
+        return [self.raw_data[chain_id][self.burn_in:, parameter_dim_id, spatial_dim_id] for chain_id in chains]
 
     def get_combined_trajectory(self):
         return np.concatenate(self.get_trajectory()).ravel()
 
     def plot(self, bins=100, stacked=True, chains=None):
-        fig, ax = plt.subplots(nrows=1, ncols=self.dimension)
-        for dim in range(self.dimension):
-            if self.dimension > 1:
-                axis = ax[dim]
-            else:
-                axis = ax
-            axis.hist(self.get_dimension(dim, chains), bins, density=True, histtype='bar', stacked=stacked)
-            axis.set_xlabel(f'dimension {dim}')
+        fig, ax = plt.subplots(nrows=self.parameter_dim, ncols=self.spatial_dim)
+        for s_dim in range(self.spatial_dim):
+            for p_dim in range(self.parameter_dim):
+                if self.spatial_dim > 1 and self.parameter_dim > 1:
+                    axis = ax[p_dim, s_dim]
+                elif self.spatial_dim > 1 and self.parameter_dim == 1:
+                    axis = ax[s_dim]
+                elif self.spatial_dim == 1 and self.parameter_dim > 1:
+                    axis = ax[p_dim]
+                else:
+                    axis = ax
+                axis.hist(self.get_dimension(p_dim, s_dim, chains), bins, density=True, histtype='bar', stacked=stacked)
+                if p_dim == 0:
+                    axis.set_title(f'dimension {s_dim}', fontsize=14)
+                if s_dim == 0:
+                    axis.set_ylabel(f'parameter {p_dim}', fontsize=14)
 
         fig.suptitle(f'#chains {self.num_chains}, #iter/chain {self.num_iterations}, #burn_in {self.burn_in}')
+        plt.tight_layout()
         plt.show()
 
         return fig, ax
@@ -64,8 +79,9 @@ class Trajectory:
 
 class DynamicalSystem:
 
-    def __init__(self, dimension, time_step):
-        self.dim = dimension
+    def __init__(self, spatial_dim, parameter_dim, time_step):
+        self.spatial_dim = spatial_dim
+        self.parameter_dim = parameter_dim
         assert time_step > 0, "time_step must be positive"
         self.time_step = time_step
         self.x = None
@@ -75,7 +91,6 @@ class DynamicalSystem:
         num_processes = self._set_num_processes(parallel, num_processes)
         print(f"Running {num_processes} chains in parallel of length {length}.")
         self.initial_states = self._initialise(num_processes)
-        print(self.initial_states)
 
         if num_processes > 1:
             # Multiprocessing trajectories
@@ -99,17 +114,18 @@ class DynamicalSystem:
         return Trajectory(trajectories)
 
     def _run(self, trajectory_array, length, process_id):
-        trajectory = np.zeros((length, self.dim))
+        trajectory = np.zeros((length, self.parameter_dim, self.spatial_dim))
         if process_id == 0:
             for idx, step in enumerate(tqdm(range(length))):
                 if idx == 0:
-                    self.x = self.initial_states[process_id]
+                    # shape parameter_dim * num_chains * spatial dim
+                    self.x = self.initial_states[:, process_id, :]
                 self.step()
                 trajectory[step, :] = self.x
         else:
             for idx, step in enumerate(range(length)):
                 if idx == 0:
-                    self.x = self.initial_states[process_id]
+                    self.x = self.initial_states[:, process_id, :]
                 self.step()
                 trajectory[step, :] = self.x
 
@@ -122,7 +138,7 @@ class DynamicalSystem:
                 pass
             elif isinstance(obj, list):
                 assert isinstance(obj[0], float), f"{name} must be either of type float or list[float]"
-                assert (len(obj) == self.dim), f"dimension is {self.dim} but {name} was dimension {len(obj)}"
+                assert (len(obj) == self.spatial_dim), f"dimension is {self.spatial_dim} but {name} was dimension {len(obj)}"
             else:
                 raise ValueError(f"{name} must be either float or list[float]")
 
@@ -131,33 +147,16 @@ class DynamicalSystem:
         if x0 is not None:
             # Using specified initial coordinates
             if isinstance(x0, float):
-                print('TEST 1')
-                test = np.full((num_processes, self.dim), x0)
-                assert test.shape == (
-                num_processes, self.dim), f"shape is {test.shape} but should be {(self.dim, num_processes)}"
-                return test  # TODO: fix bug if x0 = [0.0] for example
+                return np.full((num_processes, self.spatial_dim), x0)
             else:
-                print('TEST 2')
-                test = np.tile(x0, (num_processes, 1))
-                assert test.shape == (
-                num_processes, self.dim), f"shape is {test.shape} but should be {(self.dim, num_processes)}"
-                return test  # TODO:check
+                return np.tile(x0, (num_processes, 1))
         else:
             # Using random initialisation based on specified mean(s) and std(s)
             if isinstance(mu, float) and isinstance(sigma, float):
-                print('TEST 3')
-                test = np.random.normal(mu, sigma, size=(num_processes, self.dim))
-                assert test.shape == (
-                num_processes, self.dim), f"shape is {test.shape} but should be {(self.dim, num_processes)}"
-                print(test.shape)
-                return test
+                return np.random.normal(mu, sigma, size=(num_processes, self.spatial_dim))
             else:
                 # mu and sigma are lists
-                print('TEST 4')
-                test = np.random.multivariate_normal(mu, np.diag(sigma), size=num_processes)
-                assert test.shape == (
-                num_processes, self.dim), f"shape is {test.shape} but should be {(self.dim, num_processes)}"
-                return test  # TODO:check
+                return np.random.multivariate_normal(mu, np.diag(sigma), size=num_processes)
 
     @staticmethod
     def _set_num_processes(parallel, num_processes):
@@ -183,8 +182,8 @@ class DynamicalSystem:
 
 class OverdampedLangevin(DynamicalSystem):
 
-    def __init__(self, potential, beta, time_step, x0=None, mu=None, sigma=None, dimension=1):
-        super().__init__(dimension, time_step)
+    def __init__(self, potential, beta, time_step, x0=None, mu=None, sigma=None, spatial_dim=1):
+        super().__init__(spatial_dim=spatial_dim, parameter_dim=1, time_step=time_step)
         assert x0 is not None or (mu is not None and sigma is not None), \
             "ERROR: specify the initial coordinate (x0) or the mean (mu) and standard deviation " \
             "(sigma) for a random initialisation."
@@ -195,25 +194,25 @@ class OverdampedLangevin(DynamicalSystem):
         self.x0, self.mu, self.sigma = x0, mu, sigma
 
         log_probability = lambda x: - beta * potential(x)
-        if self.dim == 1:
+        if self.spatial_dim == 1:
             self.grad_log_prob = grad(log_probability)
         else:
             self.grad_log_prob = lambda x: np.array([float(array) for array in grad(log_probability)(x)])
 
     def _initialise(self, num_processes):
-        return self._set_initial_points(self.x0, self.mu, self.sigma, num_processes)
+        return np.array([self._set_initial_points(self.x0, self.mu, self.sigma, num_processes)])
 
     def step(self):
         # Euler-Maruyama step of Overdamped Langevin dynamics
-        w = np.random.normal(size=self.dim)
-        self.x += self.time_step * self.grad_log_prob(self.x) + np.sqrt(2 * self.dim * self.time_step) * w
+        w = np.random.normal(size=self.spatial_dim)
+        self.x[0] += self.time_step * self.grad_log_prob(self.x[0]) + np.sqrt(2 * self.spatial_dim * self.time_step) * w
 
 
 class UnderdampedLangevin(DynamicalSystem):
 
     def __init__(self, potential, gamma, M, T, time_step,
-                 Q0=None, P0=None, muQ=None, sigmaQ=None, muP=None, sigmaP=None, dimension=1):
-        super().__init__(dimension, time_step)
+                 Q0=None, P0=None, muQ=None, sigmaQ=None, muP=None, sigmaP=None, spatial_dim=1):
+        super().__init__(spatial_dim=spatial_dim, parameter_dim=2, time_step=time_step)
         assert Q0 is not None or (muQ is not None and sigmaQ is not None), \
             "ERROR: specify the initial coordinate (Q0) or the mean (muQ) and standard deviation " \
             "(sigmaQ) for a random initialisation."
@@ -235,18 +234,20 @@ class UnderdampedLangevin(DynamicalSystem):
         self.M = M
         self.T = T
 
-        if self.dim == 1:
+        if self.spatial_dim == 1:
             self.grad_U = grad(potential)
         else:
             self.grad_U = lambda x: np.array([float(array) for array in grad(potential)(x)])
 
     def _initialise(self, num_processes):
-        return [self._set_initial_points(self.Q0, self.muQ, self.sigmaQ, num_processes),
-                self._set_initial_points(self.P0, self.muP, self.sigmaP, num_processes)]
+        Q_array = self._set_initial_points(self.Q0, self.muQ, self.sigmaQ, num_processes)
+        P_array = self._set_initial_points(self.P0, self.muP, self.sigmaP, num_processes)
+        inital = np.array([Q_array, P_array])
+        return inital
 
     def step(self):
         # Euler-Maruyama step of Underdamped Langevin dynamics
-        w = np.random.normal(size=self.dim)
+        w = np.random.normal(size=self.spatial_dim)
         self.x[0] += self.x[1] * self.time_step
         self.x[1] += (-self.grad_U(self.x[0]) - self.gamma * self.x[1]) * self.time_step \
                      + np.sqrt(2 * self.M * self.gamma * self.T * self.time_step) * w
@@ -254,9 +255,9 @@ class UnderdampedLangevin(DynamicalSystem):
 
 class GaussianDriftDiffusion(DynamicalSystem):
 
-    def __init__(self, potential, diffusion_coeff, time_step, jump_prob=0, jump_amplitude=1,
-                 x0=None, mu=None, sigma=None, dimension=1):
-        super().__init__(dimension, time_step)
+    def __init__(self, potential, diffusion_coeff, time_step, jump_prob=0.0, jump_amplitude=1.0,
+                 x0=None, mu=None, sigma=None, spatial_dim=1):
+        super().__init__(spatial_dim=spatial_dim, parameter_dim=1, time_step=time_step)
         assert x0 is not None or (mu is not None and sigma is not None), \
             "ERROR: specify the initial coordinate (x0) or the mean (mu) and standard deviation " \
             "(sigma) for a random initialisation."
@@ -275,16 +276,17 @@ class GaussianDriftDiffusion(DynamicalSystem):
         self.time_step = time_step
 
     def _initialise(self, num_processes):
-        return self._set_initial_points(self.x0, self.mu, self.sigma, num_processes)
+        return np.array([self._set_initial_points(self.x0, self.mu, self.sigma, num_processes)])
 
     def step(self):
         # drift-diffusion dynamics
-        self.x += self.drift_force(self.x) * self.time_step + \
+        # NB: -ve gradient drift
+        self.x[0] -= self.drift_force(self.x[0]) * self.time_step + \
                   np.random.normal(scale=self.diffusion_coeff) * np.sqrt(self.time_step)
         # discrete jumps
         w = np.random.uniform(0, 1)
         if w < self.jump_prob:
-            self.x += np.random.normal(scale=self.jump_amplitude)
+            self.x[0] += np.random.normal(scale=self.jump_amplitude)
 
 
 # TODO: MetropolisHastings
@@ -295,50 +297,21 @@ class GaussianDriftDiffusion(DynamicalSystem):
 
 
 if __name__ == "__main__":
-    from potentials import double_well_potential, quadruple_well_potential
+    from test_Langevin import double_well_potential, quadruple_well_potential
 
     temperature = 30
     R = 0.0083144621  # Universal Gas Constant kJ/K/mol
     beta = 1.0 / (temperature * R)  # units (kJ/mol)**(-1)
 
     # Overdamped 1D
-
-    # TEST 1.1
     # ld = OverdampedLangevin(x0=1.0, potential=double_well_potential, beta=beta, time_step=5e-3)
-    # traj = ld.simulate(length=10000)
+    # traj = ld.simulate(length=1000)
     # traj.plot()
 
-    # TEST 1.2
-    # ld = OverdampedLangevin(x0=[1.0], potential=double_well_potential, beta=beta, time_step=5e-3)
-    # traj = ld.simulate(length=10000)
+    ld = GaussianDriftDiffusion(x0=[1.0, 0.5],spatial_dim=2, potential=quadruple_well_potential, diffusion_coeff=1, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3)
+    traj = ld.simulate(length=1000)
+    traj.plot()
+
+    # ld = UnderdampedLangevin(M=1, T=1, gamma=1,Q0=1.0, P0=0.2, potential=double_well_potential, time_step=5e-3)
+    # traj = ld.simulate(length=5000)
     # traj.plot()
-
-    # TEST 2
-    # ld = OverdampedLangevin(x0=[1.0,-1.0], potential=quadruple_well_potential, beta=beta, time_step=5e-3, dimension=2)
-    # traj = ld.simulate(length=10000)
-    # traj.plot()
-
-    # TEST 3
-    # ld = OverdampedLangevin(mu=0.0, sigma=1.0, potential=double_well_potential, beta=beta, time_step=5e-3)
-    # traj = ld.simulate(length=50000)
-    # traj.plot()
-
-    # TEST 4.1
-    # ld = OverdampedLangevin(mu=0.0, sigma=1.0, potential=quadruple_well_potential, beta=beta, time_step=5e-3, dimension=2)
-    # traj = ld.simulate(length=10000)
-    # traj.plot()
-
-    # TEST 4.2
-    # ld = OverdampedLangevin(x0=[-1.0, 1.0], potential=quadruple_well_potential, beta=beta, time_step=5e-3, dimension=2)
-    # traj = ld.simulate(length=10000)
-    # traj.plot()
-
-    # Overdamped ND
-
-    # Underdamped 1D
-
-    # Underdamped ND
-
-    # GaussianDriftDiffusionProcess 1D
-
-    # GaussianDriftDiffusionProcess ND
