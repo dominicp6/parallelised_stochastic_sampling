@@ -14,7 +14,7 @@ def double_well_potential(x):
     return -(1 / 4) * (x ** 2) * (h ** 4) + (1 / 2) * (c ** 2) * (x ** 4)
 ```
 
-and initialise a stochastic dynamics e.g.
+and initialise a stochastic dynamics object e.g.
 
 ```
 od_ld = OverdampedLangevin(x0=0.0, potential=double_well_potential, beta=1, time_step=5e-3)
