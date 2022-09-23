@@ -16,6 +16,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from multiprocessing import Process, Manager, cpu_count
 from abc import abstractmethod
+from typing import Union, Callable
 
 
 class Trajectory:
@@ -37,7 +38,7 @@ class Trajectory:
     def __str__(self):
         return f"Trajectory_Object(num_chains={self.num_chains}, chain_lengths={self.chain_lengths}, spatial_dim={self.spatial_dim}, parameter_dim={self.parameter_dim})"
 
-    def set_burn_in(self, burn_in):
+    def set_burn_in(self, burn_in: int):
         self.burn_in = burn_in
 
     def get_trajectory(self):
@@ -113,7 +114,7 @@ class Trajectory:
 
 class DynamicalSystem:
 
-    def __init__(self, spatial_dim, parameter_dim, time_step):
+    def __init__(self, spatial_dim: int, parameter_dim: int, time_step: float):
         self.spatial_dim = spatial_dim
         self.parameter_dim = parameter_dim
         assert time_step > 0, "time_step must be positive"
@@ -121,7 +122,7 @@ class DynamicalSystem:
         self.x = None
         self.initial_states = None
 
-    def simulate(self, length, seed=0, parallel=True, num_processes=None):
+    def simulate(self, length: int, seed=0, parallel=True, num_processes=None):
         num_processes = self._set_num_processes(parallel, num_processes)
         print(f"Running {num_processes} chains in parallel of length {length}.")
         self.initial_states = self._initialise(num_processes)
@@ -147,7 +148,7 @@ class DynamicalSystem:
 
         return Trajectory(trajectories)
 
-    def _run(self, trajectory_array, length, process_id):
+    def _run(self, trajectory_array: list, length: int, process_id: int):
         trajectory = np.zeros((length, self.parameter_dim, self.spatial_dim))
         if process_id == 0:
             for idx, step in enumerate(tqdm(range(length))):
@@ -165,7 +166,7 @@ class DynamicalSystem:
 
         trajectory_array.append(trajectory)
 
-    def _verify_obj_type_and_dim(self, name, obj):
+    def _verify_obj_type_and_dim(self, name: str, obj):
         # Checks that obj has type and size compatible with dim
         if obj is not None:
             if isinstance(obj, float):
@@ -176,7 +177,7 @@ class DynamicalSystem:
             else:
                 raise ValueError(f"{name} must be either float or list[float]")
 
-    def _set_initial_points(self, x0, mu, sigma, num_processes):
+    def _set_initial_points(self, x0: Union[float, list[float]], mu: Union[float, list[float]], sigma: Union[float, list[float]], num_processes: int):
         # Initialises starting coordinates for trajectories
         if x0 is not None:
             # Using specified initial coordinates
@@ -193,7 +194,7 @@ class DynamicalSystem:
                 return np.random.multivariate_normal(mu, np.diag(sigma), size=num_processes)
 
     @staticmethod
-    def _set_num_processes(parallel, num_processes):
+    def _set_num_processes(parallel: bool, num_processes: int):
         # Computes number of CPU processes to use
         if parallel:
             if num_processes is None:
@@ -206,7 +207,7 @@ class DynamicalSystem:
         return num_processes
 
     @abstractmethod
-    def _initialise(self, num_processes):
+    def _initialise(self, num_processes: int):
         pass
 
     @abstractmethod
@@ -216,7 +217,7 @@ class DynamicalSystem:
 
 class OverdampedLangevin(DynamicalSystem):
 
-    def __init__(self, potential, beta, time_step, x0=None, mu=None, sigma=None, spatial_dim=1):
+    def __init__(self, potential: Callable, beta: float, time_step: float, x0=None, mu=None, sigma=None, spatial_dim=1):
         super().__init__(spatial_dim=spatial_dim, parameter_dim=1, time_step=time_step)
         assert x0 is not None or (mu is not None and sigma is not None), \
             "ERROR: specify the initial coordinate (x0) or the mean (mu) and standard deviation " \
@@ -244,7 +245,7 @@ class OverdampedLangevin(DynamicalSystem):
 
 class UnderdampedLangevin(DynamicalSystem):
 
-    def __init__(self, potential, gamma, M, T, time_step,
+    def __init__(self, potential, gamma: float, M: float, T: float, time_step: float,
                  Q0=None, P0=None, muQ=None, sigmaQ=None, muP=None, sigmaP=None, spatial_dim=1):
         super().__init__(spatial_dim=spatial_dim, parameter_dim=2, time_step=time_step)
         assert Q0 is not None or (muQ is not None and sigmaQ is not None), \
@@ -273,7 +274,7 @@ class UnderdampedLangevin(DynamicalSystem):
         else:
             self.grad_U = lambda x: np.array([float(array) for array in grad(potential)(x)])
 
-    def _initialise(self, num_processes):
+    def _initialise(self, num_processes: int):
         Q_array = self._set_initial_points(self.Q0, self.muQ, self.sigmaQ, num_processes)
         P_array = self._set_initial_points(self.P0, self.muP, self.sigmaP, num_processes)
         inital = np.array([Q_array, P_array])
@@ -289,7 +290,7 @@ class UnderdampedLangevin(DynamicalSystem):
 
 class GaussianDriftDiffusion(DynamicalSystem):
 
-    def __init__(self, potential, diffusion_coeff, time_step, jump_prob=0.0, jump_amplitude=1.0,
+    def __init__(self, potential, diffusion_coeff: float, time_step: float, jump_prob=0.0, jump_amplitude=1.0,
                  x0=None, mu=None, sigma=None, spatial_dim=1):
         super().__init__(spatial_dim=spatial_dim, parameter_dim=1, time_step=time_step)
         assert x0 is not None or (mu is not None and sigma is not None), \
@@ -309,7 +310,7 @@ class GaussianDriftDiffusion(DynamicalSystem):
         self.jump_amplitude = jump_amplitude
         self.time_step = time_step
 
-    def _initialise(self, num_processes):
+    def _initialise(self, num_processes: int):
         return np.array([self._set_initial_points(self.x0, self.mu, self.sigma, num_processes)])
 
     def step(self):
