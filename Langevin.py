@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Runs Langevin dynamics sampling in parallel
+"""Implements parallelised classes for overdamped Langevin dynamics, underdamped Langevin dyanamics
+   and Gaussian drift-diffusion dynamics in arbitary dimensions.
 
-Usage:
+Example Usage:
+    see https://github.com/dominicp6/stochastic_sampling/blob/master/README.md
 
 Author:
     Dominic Phillips - 14/10/2022
@@ -50,6 +52,7 @@ class Trajectory:
         assert 0 <= parameter_dim_id < self.num_chains, f"parameter_dim_id must be an integer in the range [{0, self.parameter_dim})"
         if chains is None:
             chains = range(self.num_chains)
+        print([self.raw_data[chain_id][self.burn_in:, parameter_dim_id, spatial_dim_id] for chain_id in chains])
         return [self.raw_data[chain_id][self.burn_in:, parameter_dim_id, spatial_dim_id] for chain_id in chains]
 
     def get_combined_trajectory(self):
@@ -78,6 +81,34 @@ class Trajectory:
         plt.show()
 
         return fig, ax
+
+    def plot_trajectory(self, chains=None):
+        if chains is None:
+            chains = range(self.num_chains)
+        fig, ax = plt.subplots(nrows=self.parameter_dim, ncols=self.spatial_dim)
+        for s_dim in range(self.spatial_dim):
+            for p_dim in range(self.parameter_dim):
+                if self.spatial_dim > 1 and self.parameter_dim > 1:
+                    axis = ax[p_dim, s_dim]
+                elif self.spatial_dim > 1 and self.parameter_dim == 1:
+                    axis = ax[s_dim]
+                elif self.spatial_dim == 1 and self.parameter_dim > 1:
+                    axis = ax[p_dim]
+                else:
+                    axis = ax
+                for chain in chains:
+                    axis.plot(self.get_dimension(p_dim, s_dim, [chain])[0])
+                if p_dim == 0:
+                    axis.set_title(f'dimension {s_dim}', fontsize=14)
+                if s_dim == 0:
+                    axis.set_ylabel(f'parameter {p_dim}', fontsize=14)
+
+        fig.suptitle(f'#chains {self.num_chains}, #iter/chain {self.num_iterations}, #burn_in {self.burn_in}')
+        plt.tight_layout()
+        plt.show()
+
+        return fig, ax
+
 
 
 class DynamicalSystem:
@@ -302,18 +333,24 @@ class GaussianDriftDiffusion(DynamicalSystem):
 if __name__ == "__main__":
     from test_Langevin import double_well_potential, quadruple_well_potential
 
-    temperature = 30
-    R = 0.0083144621  # Universal Gas Constant kJ/K/mol
-    beta = 1.0 / (temperature * R)  # units (kJ/mol)**(-1)
+    # Dynamics in a 1D potential
 
-    ld = OverdampedLangevin(x0=1.0, potential=double_well_potential, beta=beta, time_step=5e-3)
-    traj = ld.simulate(length=1000)
+    od_ld = OverdampedLangevin(x0=0.0, potential=double_well_potential, beta=1, time_step=5e-3)
+    ud_ld = UnderdampedLangevin(Q0=0.0, P0=0.0, potential=double_well_potential, M=1, T=1, gamma=1, time_step=5e-3)
+    gdd = GaussianDriftDiffusion(x0=0.0, potential=double_well_potential, diffusion_coeff=1.0, jump_prob=0.05,
+                                 jump_amplitude=0.03, time_step=5e-3)
+
+    traj = od_ld.simulate(length=1000)
+
     traj.plot()
+    traj.set_burn_in(0)
+    traj.plot_trajectory(chains=[0,1,2])
 
-    ld = GaussianDriftDiffusion(x0=[1.0, 0.5],spatial_dim=2, potential=quadruple_well_potential, diffusion_coeff=1, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3)
-    traj = ld.simulate(length=1000)
-    traj.plot()
+    # Dynamics in a 2D potential
 
-    ld = UnderdampedLangevin(M=1, T=1, gamma=1,Q0=1.0, P0=0.2, potential=double_well_potential, time_step=5e-3)
-    traj = ld.simulate(length=1000)
+    ud_ld = UnderdampedLangevin(spatial_dim=2, muQ=[0.0, 0.0], muP=[0.0, 0.0], sigmaQ=[0.5, 0.5], sigmaP=[0.5, 0.5],
+                                potential=quadruple_well_potential, M=1, T=1, gamma=1, time_step=5e-3)
+
+    traj = ud_ld.simulate(length=50000)
+    traj.set_burn_in(5000)
     traj.plot()
