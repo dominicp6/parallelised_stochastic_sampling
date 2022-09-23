@@ -28,7 +28,7 @@ traj = od_ld.simulate(length=10000)
 ```
 by default chains are run in parallel for each available CPU process. 
 
-Display the probability density using the plot method
+Display the probability density of samples by using the plot method
 
 ```
 traj.plot()
