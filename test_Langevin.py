@@ -7,16 +7,12 @@ from unittest import TestCase
 from Langevin import OverdampedLangevin, UnderdampedLangevin, GaussianDriftDiffusion, Trajectory
 
 
-# from potentials import double_well_potential, quadruple_well_potential
-
-
 def double_well_potential(x):
     h = 2
     c = 2
     return -(1 / 4) * (x ** 2) * (h ** 4) + (1 / 2) * (c ** 2) * (x ** 4)
 
 
-# Quadruple Well (2D)
 def quadruple_well_potential(x):
     h = 2
     c = 2
@@ -32,36 +28,35 @@ class TestTrajectory(TestCase):
         self.test_array3 = [np.array([np.array([[1.0], [0.7], [0.5]])]), np.array([np.array([[1.1], [0.6], [0.4]])])]
         self.test_array4 = [np.array([np.array([[1.0, -1.0], [0.7, -0.75], [0.5, -0.4]])]),
                             np.array([np.array([[1.2, -1.1], [0.6, -0.72], [0.52, -0.35]])])]
-        self.trajectory = Trajectory
 
     def test_get_trajectory(self):
-        assert self.trajectory(data=self.test_array1).set_burn_in(0).get_trajectory() == self.test_array1
-        assert self.trajectory(data=self.test_array2).set_burn_in(0).get_trajectory() == self.test_array2
-        assert self.trajectory(data=self.test_array3).set_burn_in(0).get_trajectory() == self.test_array3
-        assert self.trajectory(data=self.test_array4).set_burn_in(0).get_trajectory() == self.test_array4
+        assert np.isclose(Trajectory(data=self.test_array1, burn_in=0).get_trajectory(), self.test_array1).all()
+        assert np.isclose(Trajectory(data=self.test_array2, burn_in=0).get_trajectory(), self.test_array2).all()
+        assert np.isclose(Trajectory(data=self.test_array3, burn_in=0).get_trajectory(), self.test_array3).all()
+        assert np.isclose(Trajectory(data=self.test_array4, burn_in=0).get_trajectory(), self.test_array4).all()
 
     def test_get_chain(self):
-        assert self.trajectory(data=self.test_array1).set_burn_in(0).get_chain(0) == np.array([[1.0], [0.7], [0.5]])
-        assert self.trajectory(data=self.test_array2).set_burn_in(0).get_chain(0) == np.array(
-            [[1.0, -1.0], [0.7, -0.75], [0.5, -0.4]])
-        assert self.trajectory(data=self.test_array3).set_burn_in(0).get_chain(0) == np.array([[1.0], [0.7], [0.5]])
-        assert self.trajectory(data=self.test_array4).set_burn_in(0).get_chain(0) == np.array(
-            [[1.0, -1.0], [0.7, -0.75], [0.5, -0.4]])
+        assert np.isclose(Trajectory(data=self.test_array1, burn_in=0).get_chain(0), np.array([[1.0], [0.7], [0.5]])).all()
+        assert np.isclose(Trajectory(data=self.test_array2, burn_in=0).get_chain(0), np.array(
+            [[1.0, -1.0], [0.7, -0.75], [0.5, -0.4]])).all()
+        assert np.isclose(Trajectory(data=self.test_array3, burn_in=0).get_chain(0), np.array([[1.0], [0.7], [0.5]])).all()
+        assert np.isclose(Trajectory(data=self.test_array4, burn_in=0).get_chain(0), np.array(
+            [[1.0, -1.0], [0.7, -0.75], [0.5, -0.4]])).all()
 
     def test_get_dimension(self):
-        assert self.trajectory(data=self.test_array1).set_burn_in(0).get_dimension(0) == [[1.0, 0.7, 0.5]]
-        assert self.trajectory(data=self.test_array2).set_burn_in(0).get_dimension(0) == [[1.0, 0.7, 0.5]]
-        assert self.trajectory(data=self.test_array3).set_burn_in(0).get_dimension(0) == [[1.0, 0.7, 0.5],
-                                                                                          [1.1, 0.6, 0.4]]
-        assert self.trajectory(data=self.test_array4).set_burn_in(0).get_dimension(0) == [[1.0, 0.7, 0.5],
-                                                                                          [1.2, 0.6, 0.52]]
+        assert np.isclose(Trajectory(data=self.test_array1, burn_in=0).get_dimension(0,0), [[1.0, 0.7, 0.5]]).all()
+        assert np.isclose(Trajectory(data=self.test_array2, burn_in=0).get_dimension(0,0), [[1.0, 0.7, 0.5]]).all()
+        assert np.isclose(Trajectory(data=self.test_array3, burn_in=0).get_dimension(0,0), [[1.0, 0.7, 0.5],
+                                                                                          [1.1, 0.6, 0.4]]).all()
+        assert np.isclose(Trajectory(data=self.test_array4, burn_in=0).get_dimension(0,0), [[1.0, 0.7, 0.5],
+                                                                                          [1.2, 0.6, 0.52]]).all()
 
     def test_get_combined_trajectory(self):
         # TODO: finish
-        print(self.trajectory(data=self.test_array1).set_burn_in(0).get_combined_trajectory(0))
-        print(self.trajectory(data=self.test_array2).set_burn_in(0).get_combined_trajectory(0))
-        print(self.trajectory(data=self.test_array3).set_burn_in(0).get_combined_trajectory(0))
-        print(self.trajectory(data=self.test_array4).set_burn_in(0).get_combined_trajectory(0))
+        print(Trajectory(data=self.test_array1, burn_in=0).get_combined_trajectory())
+        print(Trajectory(data=self.test_array2, burn_in=0).get_combined_trajectory())
+        print(Trajectory(data=self.test_array3, burn_in=0).get_combined_trajectory())
+        print(Trajectory(data=self.test_array4, burn_in=0).get_combined_trajectory())
 
 
 class TestDynamicalSystem():

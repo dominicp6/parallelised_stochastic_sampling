@@ -20,7 +20,10 @@ class Trajectory:
 
     def __init__(self, data: list[np.array], burn_in=None):
         self.raw_data = data
-        self.burn_in = min(int(data[0].shape[0]/2), 2000) # TODO: check
+        if burn_in is None:
+            self.burn_in = min(int(data[0].shape[0]/2), 2000) # TODO: check
+        else:
+            self.burn_in = burn_in
         self.num_chains = len(data)
         assert len(set(data[i].shape[1] for i in range(len(data)))) == 1, "not all chains have the same dimension"
         self.spatial_dim = data[0][0].shape[1]
@@ -303,15 +306,14 @@ if __name__ == "__main__":
     R = 0.0083144621  # Universal Gas Constant kJ/K/mol
     beta = 1.0 / (temperature * R)  # units (kJ/mol)**(-1)
 
-    # Overdamped 1D
-    # ld = OverdampedLangevin(x0=1.0, potential=double_well_potential, beta=beta, time_step=5e-3)
-    # traj = ld.simulate(length=1000)
-    # traj.plot()
+    ld = OverdampedLangevin(x0=1.0, potential=double_well_potential, beta=beta, time_step=5e-3)
+    traj = ld.simulate(length=1000)
+    traj.plot()
 
     ld = GaussianDriftDiffusion(x0=[1.0, 0.5],spatial_dim=2, potential=quadruple_well_potential, diffusion_coeff=1, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3)
     traj = ld.simulate(length=1000)
     traj.plot()
 
-    # ld = UnderdampedLangevin(M=1, T=1, gamma=1,Q0=1.0, P0=0.2, potential=double_well_potential, time_step=5e-3)
-    # traj = ld.simulate(length=5000)
-    # traj.plot()
+    ld = UnderdampedLangevin(M=1, T=1, gamma=1,Q0=1.0, P0=0.2, potential=double_well_potential, time_step=5e-3)
+    traj = ld.simulate(length=1000)
+    traj.plot()
