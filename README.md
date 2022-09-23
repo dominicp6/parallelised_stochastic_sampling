@@ -35,6 +35,15 @@ traj.plot()
 ```
 ![image](https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png)
 
+Visualise the chains trajectories using the plot_trajectory method
+```
+traj.set_burn_in(0)
+traj.plot_trajectories(chains=[0,1,2])
+```
+here we choose to plot only the first three chains to avoid an overly-cluttered plot
+![image](https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png)
+
+
 ### Stochastic Dynamics in a 2D potential (a quadruple well)
 
 First specify the functional form of the potential,
