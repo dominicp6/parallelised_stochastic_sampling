@@ -24,7 +24,7 @@ gdd = GaussianDriftDiffusion(x0=0.0, potential=double_well_potential, diffusion_
 and run the sampling using the simulate method e.g.
 
 ```
-traj = ud_ld.simulate(length=10000)
+traj = od_ld.simulate(length=10000)
 ```
 by default chains are run in parallel for each available CPU process. 
 
@@ -34,5 +34,38 @@ Display the probability density using the trajectory plot method
 traj.plot()
 ```
 ![image](https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png)
+
+### Stochastic Dynamics in a 2D potential (a quadruple well)
+
+First specify the functional form of the potential,
+
+```
+def quadruple_well_potential(x):
+    h = 2
+    c = 2
+    return (-(1 / 4) * (x[0] ** 2) * (h ** 4) + (1 / 2) * (c ** 2) * (x[0] ** 4)) + (
+            -(1 / 4) * (x[1] ** 2) * (h ** 4) + (1 / 2) * (c ** 2) * (x[1] ** 4))
+```
+
+and initialise a stochastic dynamics, specifying the number of spatial dimensions (2), e.g. 
+
+```
+ud_ld = UnderdampedLangevin(spatial_dim = 2, muQ=[0.0, 0.0], muP=[0.0, 0.0], sigmaQ=[0.5, 0.5], sigmaP=[0.5, 0.5], potential=quadruple_well_potential, M=1, T=1, gamma=1, time_step=5e-3)
+```
+note this time we have randomised the chain initial conditions with specified position and momentum mean (muQ, muP) and standard deviation (sigmaQ, sigmaP) for each dimension. 
+
+Finally, run a stochastic simulation
+```
+traj = ud_ld.simulate(length=50000)
+```
+optionally, we can modify the burn-in
+```
+traj.set_burn_in(5000)
+```
+and display the probability density of each parameter for each dimension using the plot method 
+```
+traj.plot()
+```
+![image](https://user-images.githubusercontent.com/55788137/191995714-eb56d98a-8d07-4c3d-a994-013b5adaa841.png)
 
 
