@@ -285,9 +285,9 @@ class AnisotropicOverdampedLangevin(DynamicalSystem):
 
     def step(self):
         w = np.random.normal(size=self.spatial_dim)
-        self.x[0] += self.time_step * (- self.diffusion_matrix(self.x[0]) @ self.grad_free_energy(self.x[0])
-                                       + (self.beta) ** (-1) * self.matrix_divergence(self.diffusion_jacobian, self.x[0])) \
-                     + np.sqrt(2 * self.beta ** (-1) * self.time_step) * np.sqrt(self.diffusion_matrix(self.x[0])) @ w
+        self.x[0] += self.time_step * (- self.diffusion_matrix(self.x[0]) @ self.grad_free_energy(self.x[0]) + \
+                    + (self.beta) ** (-1) * self.matrix_divergence(self.diffusion_jacobian, self.x[0])) + \
+                     np.sqrt(2 * self.beta ** (-1) * self.time_step) * np.sqrt(self.diffusion_matrix(self.x[0])) @ w
 
 
 class UnderdampedLangevin(DynamicalSystem):

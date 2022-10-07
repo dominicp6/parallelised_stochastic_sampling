@@ -47,7 +47,7 @@ note that by default chains are burnt-in and the visualisation neglects the firs
 Visualise the chains trajectories using the plot_trajectory method
 ```
 traj.set_burn_in(0)
-traj.plot_trajectories(chains=[0,1,2])
+traj.plot_trajectory(chains=[0,1,2])
 ```
 here we choose to plot only the first three chains to avoid an overly-cluttered plot
 ![image](https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png)
