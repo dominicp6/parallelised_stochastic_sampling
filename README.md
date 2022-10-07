@@ -41,7 +41,8 @@ Display the probability density of samples by using the plot method
 traj.plot()
 ```
 ![image](https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png)
-by default chains are burnt-in and the visualisation neglects the first $N$ iteratitions (here $N=2000$).
+
+note that by default chains are burnt-in and the visualisation neglects the first $N$ iteratitions (here $N=2000$).
 
 Visualise the chains trajectories using the plot_trajectory method
 ```
