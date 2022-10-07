@@ -26,7 +26,9 @@ od_ld = OverdampedLangevin(x0=0.0, potential=double_well_potential, beta=1, time
 ud_ld = UnderdampedLangevin(Q0=0.0, P0=0.0, potential=double_well_potential, M=1, T=1, gamma=1, time_step=5e-3)
 gdd = GaussianDriftDiffusion(x0=0.0, potential=double_well_potential, diffusion_coeff=1.0, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3)
 ```
-and run the sampling using the simulate method e.g.
+where $x0, Q0, P0$ specify the initial coordinates of the chains (in this example all chains start at the origin).
+
+Next run the sampling using the simulate method e.g.
 
 ```
 traj = od_ld.simulate(length=10000)
