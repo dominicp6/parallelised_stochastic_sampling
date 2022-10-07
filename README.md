@@ -3,7 +3,7 @@ Implements parallelised stochastic sampling in arbitary dimensions for:
 1) Overdamped Langevin dynamics, 
 $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrightarrow{dW}_t$
 3) Anisotropic overdamped Langevin dynamics, $\overrightarrow{dX}_t =\left(- \mathbf{M}(\overrightarrow{X}_t)\overrightarrow{\nabla}V(X_t) + \beta^{-1} \overrightarrow{\nabla} \cdot \mathbf{M}(\overrightarrow{X}_t)\right)dt + \sqrt{2 \beta^{-1}}\mathbf{M}^{\frac{1}{2}}(\overrightarrow{X}_t) \overrightarrow{dW}_t$ 
-4) Underdamped Langevin dyanamics, 
+4) Underdamped Langevin dyanamics, $\overrightarrow{dQ}_t = \overrightarrow{P}_t dt$, $\overrightarrow{dP}_t = \left(- \nabla V(\overrightarrow{Q}_t) - \gamma \overrightarrow{P}_t\right)dt + \sqrt{2M\gamma T} \overrightarrow{dW}_t$
 5) Gaussian drift-diffusion dynamics.
 
 ## Example Usage
