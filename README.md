@@ -1,8 +1,8 @@
 # parallelised_stochastic_sampling
 Implements parallelised stochastic sampling in arbitary dimensions for:
 1) Overdamped Langevin dynamics, 
-$dx_t = - \beta log \nabla V(x_t) + dW_t$
-3) Anisotropic overdamped Langevin dynamics, 
+$dX_t = - \beta log \nabla V(X_t)dt + dW_t$
+3) Anisotropic overdamped Langevin dynamics, $dX_t =(- M(X_t)\nabla V(X_t) + \beta^{-1} \nabla \cdot M(X_t))dt + \sqrt{2 \beta^{-1}}M^{\frac{1}{2}}(X_t) dW_t$ 
 4) Underdamped Langevin dyanamics, 
 5) Gaussian drift-diffusion dynamics.
 
