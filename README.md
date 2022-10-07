@@ -28,7 +28,7 @@ gdd = GaussianDriftDiffusion(x0=0.0, potential=double_well_potential, diffusion_
 ```
 note that $x_0, Q_0, P_0$ specify the initial coordinates of the chains (in this example all chains start at the origin).
 
-Next run the sampling using the simulate method e.g.
+Next run the sampling using the simulate method e.g. to simulate overdamped Langevin dynamics for 10,000 steps starting at the origin
 
 ```
 traj = od_ld.simulate(length=10000)
