@@ -8,7 +8,7 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 ## Example Usage
 
-### Stochastic Dynamics in a Double-Well Potential
+### Stochastic Dynamics in a 1D Double-Well Potential
 
 First specify the functional form of the potential,
 
