@@ -1,5 +1,10 @@
 # parallelised_stochastic_sampling
-Implements parallelised classes for overdamped Langevin dynamics, anisotropic overdamped Langevin dynamics, underdamped Langevin dyanamics and Gaussian drift-diffusion dynamics in arbitary dimensions.
+Implements parallelised stochastic sampling in arbitary dimensions for:
+1) Overdamped Langevin dynamics, 
+$Test $
+3) Anisotropic overdamped Langevin dynamics, 
+4) Underdamped Langevin dyanamics, 
+5) Gaussian drift-diffusion dynamics.
 
 ## Example Usage
 
