@@ -53,7 +53,7 @@ here we choose to plot only the first three chains to avoid an overly-cluttered 
 ![image](https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png)
 
 
-### Stochastic Dynamics in a 2D potential (a quadruple well)
+### Stochastic Dynamics in a 2D quadruple well potential
 
 First specify the functional form of the potential,
 
