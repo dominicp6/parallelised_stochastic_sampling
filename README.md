@@ -13,85 +13,63 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 > `tutorial.ipynb` - tutorial Jupyter notebook with worked examples
 
-## Gallery 
-[//]: # (## Example Usage)
 
-[//]: # ()
-[//]: # (### Stochastic Dynamics in a 1D Double-Well Potential)
+## Quick Example:
 
-[//]: # ()
-[//]: # (First specify the functional form of the potential,)
 
-[//]: # ()
-[//]: # (```)
+### Stochastic Dynamics in a 1D Double-Well Potential
 
-[//]: # (def double_well_potential&#40;x&#41;:)
 
-[//]: # (    h = 2)
+First specify the functional form of the potential,
 
-[//]: # (    c = 2)
 
-[//]: # (    return -&#40;1 / 4&#41; * &#40;x ** 2&#41; * &#40;h ** 4&#41; + &#40;1 / 2&#41; * &#40;c ** 2&#41; * &#40;x ** 4&#41;)
+```
+def double_well_potential(x):
+    h = 2
+    c = 2
+    return -(1 / 4) * (x ** 2) * (h ** 4) + (1 / 2) * (c ** 2) * (x ** 4)
+```
 
-[//]: # (```)
+and initialise a stochastic dynamics object e.g.
 
-[//]: # ()
-[//]: # (and initialise a stochastic dynamics object e.g.)
+```
+od_ld = OverdampedLangevin(x0=0.0, potential=double_well_potential, beta=1, time_step=5e-3)
+ud_ld = UnderdampedLangevin(Q0=0.0, P0=0.0, potential=double_well_potential, M=1, T=1, gamma=1, time_step=5e-3)
+gdd = GaussianDriftDiffusion(x0=0.0, potential=double_well_potential, diffusion_coeff=1.0, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3)
+```
+note that $x_0, Q_0, P_0$ specify the initial coordinates of the chains (in this example all chains start at the origin).
 
-[//]: # ()
-[//]: # (```)
+Next run the sampling using the simulate method e.g. to simulate overdamped Langevin dynamics with chains of length 10,000:
 
-[//]: # (od_ld = OverdampedLangevin&#40;x0=0.0, potential=double_well_potential, beta=1, time_step=5e-3&#41;)
+```
+traj = od_ld.simulate(length=10000)
+```
 
-[//]: # (ud_ld = UnderdampedLangevin&#40;Q0=0.0, P0=0.0, potential=double_well_potential, M=1, T=1, gamma=1, time_step=5e-3&#41;)
+by default chains are run in parallel for each available CPU process. 
 
-[//]: # (gdd = GaussianDriftDiffusion&#40;x0=0.0, potential=double_well_potential, diffusion_coeff=1.0, jump_prob=0.05, jump_amplitude=0.03, time_step=5e-3&#41;)
+Display the probability density of samples by using the plot method
 
-[//]: # (```)
-
-[//]: # (note that $x_0, Q_0, P_0$ specify the initial coordinates of the chains &#40;in this example all chains start at the origin&#41;.)
-
-[//]: # ()
-[//]: # (Next run the sampling using the simulate method e.g. to simulate overdamped Langevin dynamics with chains of length 10,000:)
-
-[//]: # ()
-[//]: # (```)
-
-[//]: # (traj = od_ld.simulate&#40;length=10000&#41;)
-
-[//]: # (```)
-
-[//]: # (by default chains are run in parallel for each available CPU process. )
-
-[//]: # ()
-[//]: # (Display the probability density of samples by using the plot method)
-
-[//]: # ()
-[//]: # (```)
-
-[//]: # (traj.plot&#40;&#41;)
-
-[//]: # (```)
+```
+traj.plot()
+```
 
 ![image](https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png)
 
-[//]: # ()
-[//]: # (note that by default chains are burnt-in and the visualisation neglects the first $N$ iteratitions &#40;here $N=2000$&#41;.)
+note that by default chains are burnt-in and the visualisation neglects the first $N$ iteratitions (here $N=2000$).
 
-[//]: # ()
-[//]: # (Visualise the chains trajectories using the plot_trajectory method)
+Visualise the chains trajectories using the plot_trajectory method
 
-[//]: # (```)
+```
+traj.set_burn_in(0)
+traj.plot_trajectory(chains=[0,1,2])
+```
 
-[//]: # (traj.set_burn_in&#40;0&#41;)
-
-[//]: # (traj.plot_trajectory&#40;chains=[0,1,2]&#41;)
-
-[//]: # (```)
-
-[//]: # (here we choose to plot only the first three chains to avoid an overly-cluttered plot)
+here we choose to plot only the first three chains to avoid an overly-cluttered plot
 
 ![image](https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png)
+
+
+> **More advanced examples in `tutorial.ipynb`**
 
 [//]: # ()
 [//]: # ()
@@ -152,6 +130,6 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 [//]: # (```)
 
-![image](https://user-images.githubusercontent.com/55788137/191995714-eb56d98a-8d07-4c3d-a994-013b5adaa841.png)
+[//]: # (![image]&#40;https://user-images.githubusercontent.com/55788137/191995714-eb56d98a-8d07-4c3d-a994-013b5adaa841.png&#41;)
 
 
