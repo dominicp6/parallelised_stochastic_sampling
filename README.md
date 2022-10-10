@@ -13,6 +13,7 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 > `tutorial.ipynb` - tutorial Jupyter notebook with worked examples
 
+## Gallery 
 [//]: # (## Example Usage)
 
 [//]: # ()
@@ -72,7 +73,7 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 [//]: # (```)
 
-[//]: # (![image]&#40;https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png&#41;)
+![image](https://user-images.githubusercontent.com/55788137/191993202-150e9dc5-dc0d-4b4b-8ece-acc5ff2b43da.png)
 
 [//]: # ()
 [//]: # (note that by default chains are burnt-in and the visualisation neglects the first $N$ iteratitions &#40;here $N=2000$&#41;.)
@@ -90,7 +91,7 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 [//]: # (here we choose to plot only the first three chains to avoid an overly-cluttered plot)
 
-[//]: # (![image]&#40;https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png&#41;)
+![image](https://user-images.githubusercontent.com/55788137/192000152-281081e5-8bad-4eda-a06f-e6cf8b718739.png)
 
 [//]: # ()
 [//]: # ()
@@ -151,6 +152,6 @@ $\overrightarrow{dX}_t = - \beta log \overrightarrow{\nabla} V(X_t)dt + \overrig
 
 [//]: # (```)
 
-[//]: # (![image]&#40;https://user-images.githubusercontent.com/55788137/191995714-eb56d98a-8d07-4c3d-a994-013b5adaa841.png&#41;)
+![image](https://user-images.githubusercontent.com/55788137/191995714-eb56d98a-8d07-4c3d-a994-013b5adaa841.png)
 
 
