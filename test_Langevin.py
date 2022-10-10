@@ -25,7 +25,7 @@ def moro_cardin_potential(x):
 
 
 def moro_cardin_diffusion_matrix(x):
-    return (1 + 8 * np.exp(- (x[0] ** 2 + x[1] ** 2) / (2 * 0.2 ** 2))) ** (-1) * np.eye((2,2))
+    return (1 + 8 * np.exp(- (x[0] ** 2 + x[1] ** 2) / (2 * 0.2 ** 2))) ** (-1) * np.eye(2)
 
 
 class TestTrajectory(TestCase):

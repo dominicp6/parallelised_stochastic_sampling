@@ -18,6 +18,7 @@ from multiprocessing import Process, Manager, cpu_count
 from abc import abstractmethod
 from typing import Union, Callable, Optional
 
+# TODO: code to automatically check if spatial dimension was not set correctly
 
 class Trajectory:
 
@@ -130,7 +131,11 @@ class DynamicalSystem:
         for obj, name in zip(objects, object_names):
             self._verify_obj_type_and_dim(name, obj)
 
-    def simulate(self, length: int, seed: int = 0, parallel: bool = True, num_processes: Optional[int] = None):
+    def simulate(self,
+                 length: int,
+                 seed: int = 0,
+                 parallel: bool = True,
+                 num_processes: Optional[int] = None) -> Trajectory:
         num_processes = self._set_num_processes(parallel, num_processes)
         print(f"Running {num_processes} chains in parallel of length {length}.")
         self.initial_states = self._initialise(num_processes)
